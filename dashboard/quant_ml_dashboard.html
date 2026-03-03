@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quant ML Framework — Research Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap');
+  :root {
+    --bg:#070a0f;--bg1:#0c1117;--bg2:#111620;--bg3:#161d2b;
+    --border:#1e2a3d;--border2:#253348;
+    --accent:#00d4ff;--accent2:#7b5ea7;--accent3:#00ff9f;--accent4:#ff6b35;--accent5:#ffd700;
+    --red:#ff4757;--green:#2ed573;
+    --text:#e8edf5;--text2:#8899aa;--text3:#556677;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+  header{position:relative;z-index:10;padding:22px 32px 18px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(0,212,255,0.04) 0%,transparent 100%);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  .logo h1{font-family:'Syne',sans-serif;font-size:21px;font-weight:800;letter-spacing:.05em;color:var(--accent);text-shadow:0 0 20px rgba(0,212,255,.35);}
+  .logo .sub{font-size:10px;color:var(--text3);letter-spacing:.14em;margin-top:2px;}
+  .hstats{display:flex;gap:22px;flex-wrap:wrap;}
+  .hs{display:flex;flex-direction:column;align-items:flex-end;}
+  .hs .v{font-size:17px;font-weight:700;color:var(--accent3);}
+  .hs .l{font-size:9px;color:var(--text3);letter-spacing:.12em;}
+  nav{position:relative;z-index:10;display:flex;gap:2px;padding:10px 32px 0;border-bottom:1px solid var(--border);background:var(--bg1);overflow-x:auto;}
+  .tb{padding:9px 16px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.1em;border:none;background:transparent;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;}
+  .tb:hover{color:var(--text2);}
+  .tb.active{color:var(--accent);border-bottom-color:var(--accent);background:rgba(0,212,255,.05);}
+  main{position:relative;z-index:5;padding:24px 32px;max-width:1600px;margin:0 auto;}
+  .tp{display:none;}.tp.active{display:block;}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;}
+  .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  .fw{grid-column:1/-1;}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:18px;}
+  .ch{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:9px;border-bottom:1px solid var(--border);}
+  .ct{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.15em;color:var(--text2);}
+  .cb{font-size:9px;padding:3px 7px;border-radius:3px;letter-spacing:.09em;}
+  .bb{background:rgba(0,212,255,.1);color:var(--accent);border:1px solid rgba(0,212,255,.2);}
+  .bp{background:rgba(123,94,167,.1);color:var(--accent2);border:1px solid rgba(123,94,167,.2);}
+  .bg{background:rgba(0,255,159,.1);color:var(--accent3);border:1px solid rgba(0,255,159,.2);}
+  .bo{background:rgba(255,107,53,.1);color:var(--accent4);border:1px solid rgba(255,107,53,.2);}
+  .mt{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:14px;text-align:center;}
+  .mv{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:3px;}
+  .mv.pos{color:var(--green);}.mv.neg{color:var(--red);}.mv.neu{color:var(--accent);}
+  .ml{font-size:9px;letter-spacing:.11em;color:var(--text3);}
+  .cc{position:relative;width:100%;}
+  canvas{max-width:100%;}
+  table.qt{width:100%;border-collapse:collapse;font-size:11px;}
+  table.qt th{padding:7px 11px;text-align:right;font-size:9px;letter-spacing:.1em;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;}
+  table.qt th:first-child{text-align:left;}
+  table.qt td{padding:8px 11px;text-align:right;border-bottom:1px solid rgba(30,42,61,.5);color:var(--text2);white-space:nowrap;}
+  table.qt td:first-child{text-align:left;color:var(--text);font-weight:500;}
+  table.qt tr:hover td{background:rgba(0,212,255,.02);}
+  table.qt tr.ptf td{color:var(--accent);font-weight:600;}
+  .pos{color:var(--green)!important;}.neg{color:var(--red)!important;}
+  .sc{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px;}
+  .chip{padding:3px 9px;border-radius:4px;font-size:10px;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text2);transition:all .15s;font-family:'JetBrains Mono',monospace;}
+  .chip.on{border-color:var(--accent);background:rgba(0,212,255,.08);color:var(--accent);}
+  .sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:18px;}
+  .si{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:11px;}
+  .sn{font-size:9px;letter-spacing:.1em;color:var(--text3);margin-bottom:4px;}
+  .sv{font-size:14px;font-weight:600;}
+  .hbr{display:flex;align-items:center;gap:9px;margin-bottom:7px;}
+  .hbl{font-size:9px;color:var(--text2);width:100px;text-align:right;flex-shrink:0;}
+  .hbt{flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+  .hbf{height:100%;border-radius:3px;}
+  .hbv{font-size:10px;width:52px;color:var(--text2);flex-shrink:0;}
+  ::-webkit-scrollbar{width:5px;height:5px;}
+  ::-webkit-scrollbar-track{background:var(--bg);}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+  @media(max-width:900px){.g2,.g3,.g4{grid-template-columns:1fr;}main{padding:14px;}header{padding:14px;}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <h1>⬡ QUANT ML FRAMEWORK</h1>
+    <div class="sub">SYSTEMATIC STRATEGIES · ML SIGNAL PROCESSING · RISK ANALYTICS</div>
+  </div>
+  <div class="hstats">
+    <div class="hs"><span class="v">15</span><span class="l">STRATEGIES</span></div>
+    <div class="hs"><span class="v">5</span><span class="l">ML MODELS</span></div>
+    <div class="hs"><span class="v">50+</span><span class="l">METRICS</span></div>
+    <div class="hs"><span class="v">1500</span><span class="l">TRADING DAYS</span></div>
+    <div class="hs"><span class="v">0.21</span><span class="l">PTF SHARPE</span></div>
+  </div>
+</header>
+<nav>
+  <button class="tb active" onclick="showTab('overview',this)">OVERVIEW</button>
+  <button class="tb" onclick="showTab('strategies',this)">STRATEGIES</button>
+  <button class="tb" onclick="showTab('mlmodels',this)">ML MODELS</button>
+  <button class="tb" onclick="showTab('risk',this)">RISK METRICS</button>
+  <button class="tb" onclick="showTab('factors',this)">FACTOR ANALYSIS</button>
+</nav>
+<main>
+
+<!-- OVERVIEW -->
+<div class="tp active" id="tab-overview">
+  <div class="g4" style="margin-bottom:18px">
+    <div class="mt"><div class="mv pos">+6.6%</div><div class="ml">PORTFOLIO CAGR</div></div>
+    <div class="mt"><div class="mv neu">0.21</div><div class="ml">SHARPE RATIO</div></div>
+    <div class="mt"><div class="mv neg">-25.4%</div><div class="ml">MAX DRAWDOWN</div></div>
+    <div class="mt"><div class="mv neu">0.26</div><div class="ml">CALMAR RATIO</div></div>
+  </div>
+  <div style="margin-bottom:18px">
+    <div class="card fw">
+      <div class="ch"><span class="ct">EQUITY CURVES — STRATEGY COMPARISON</span><span class="cb bb">1500 TRADING DAYS · 2020–2026</span></div>
+      <div class="sc" id="eq-sel"></div>
+      <div class="cc" style="height:300px"><canvas id="eqChart"></canvas></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><span class="ct">PORTFOLIO DRAWDOWN PROFILE</span><span class="cb bo">KILL SWITCH -25%</span></div>
+      <div class="cc" style="height:190px"><canvas id="ddChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">STRATEGY SHARPE RANKING</span><span class="cb bg">RISK-ADJUSTED</span></div>
+      <div class="cc" style="height:190px"><canvas id="shBarChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- STRATEGIES -->
+<div class="tp" id="tab-strategies">
+  <div class="card" style="margin-bottom:18px">
+    <div class="ch"><span class="ct">FULL STRATEGY SCORECARD</span><span class="cb bb">50+ METRICS · 12 STRATEGIES</span></div>
+    <div style="overflow-x:auto">
+      <table class="qt">
+        <thead><tr><th>STRATEGY</th><th>TYPE</th><th>CAGR</th><th>VOL</th><th>SHARPE</th><th>SORTINO</th><th>CALMAR</th><th>OMEGA</th><th>MAX DD</th><th>HURST</th><th>SKEW</th><th>VaR95</th></tr></thead>
+        <tbody id="stbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><span class="ct">RETURN vs RISK SCATTER</span><span class="cb bp">EFFICIENT FRONTIER</span></div>
+      <div class="cc" style="height:250px"><canvas id="rrChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">DAILY RETURN DISTRIBUTION</span><span class="cb bg">PORTFOLIO HISTOGRAM</span></div>
+      <div class="cc" style="height:250px"><canvas id="histChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ML MODELS -->
+<div class="tp" id="tab-mlmodels">
+  <div class="g2" style="margin-bottom:18px">
+    <div class="card">
+      <div class="ch"><span class="ct">HMM — REGIME DETECTION (3 STATES)</span><span class="cb bp">BAUM-WELCH EM</span></div>
+      <div class="sg" id="hmm-st"></div>
+      <div class="cc" style="height:190px"><canvas id="regChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">GARCH(1,1) — CONDITIONAL VOLATILITY</span><span class="cb bo">ANNUALIZED</span></div>
+      <div class="sg" id="garch-st"></div>
+      <div class="cc" style="height:190px"><canvas id="garchC"></canvas></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><span class="ct">KALMAN FILTER — DYNAMIC β (SPY/QQQ)</span><span class="cb bb">PAIRS TRADING</span></div>
+      <div class="cc" style="height:220px"><canvas id="kalC"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">PCA — PC1 MARKET FACTOR (48.3% VAR)</span><span class="cb bg">IDIOSYNCRATIC ALPHA</span></div>
+      <div class="cc" style="height:220px"><canvas id="pcaC"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- RISK -->
+<div class="tp" id="tab-risk">
+  <div class="sg" id="risk-sg" style="margin-bottom:18px"></div>
+  <div class="g2" style="margin-bottom:18px">
+    <div class="card">
+      <div class="ch"><span class="ct">ROLLING SHARPE RATIO (63-DAY)</span><span class="cb bb">PORTFOLIO</span></div>
+      <div class="cc" style="height:190px"><canvas id="rsC"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">VaR / CVaR — TAIL RISK BREAKDOWN</span><span class="cb bo">PORTFOLIO</span></div>
+      <div id="varBars" style="padding:8px 0"></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><span class="ct">ROLLING VOLATILITY (21-DAY ANN.)</span><span class="cb bo">MULTI-STRATEGY</span></div>
+      <div class="cc" style="height:190px"><canvas id="rvC"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">RISK PROFILE — SPIDER CHART</span><span class="cb bp">PORTFOLIO vs TSMOM</span></div>
+      <div class="cc" style="height:190px"><canvas id="radarC"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- FACTORS -->
+<div class="tp" id="tab-factors">
+  <div class="g2" style="margin-bottom:18px">
+    <div class="card">
+      <div class="ch"><span class="ct">PCA FACTOR LOADINGS — 3 COMPONENTS</span><span class="cb bb">ASSET DECOMPOSITION</span></div>
+      <div class="cc" style="height:260px"><canvas id="pcaLoadC"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">HMM TRANSITION MATRIX</span><span class="cb bp">REGIME PERSISTENCE</span></div>
+      <div id="tmDiv" style="padding:8px"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><span class="ct">ASSET CROSS-CORRELATION HEATMAP</span><span class="cb bg">252-DAY WINDOW</span></div>
+    <div id="corrDiv" style="overflow-x:auto;padding:6px"></div>
+  </div>
+</div>
+
+</main>
+<script>
+Chart.defaults.color='#8899aa';
+Chart.defaults.borderColor='#1e2a3d';
+Chart.defaults.font.family="'JetBrains Mono',monospace";
+Chart.defaults.font.size=10;
+
+// ── DATA ─────────────────────────────────────────────────────
+const SUMMARY=[
+  {s:'TSMOM',    t:'MOMENTUM', sh:0.253, cg:0.0847, md:-0.3667, cl:0.23, om:1.606, so:0.722, av:0.405, v9:-0.0152, hu:0.658, sk:1.8},
+  {s:'CSMom',    t:'MOMENTUM', sh:-0.18, cg:-0.034, md:-0.44,   cl:-0.08,om:0.730, so:-0.42, av:0.220, v9:-0.019,  hu:0.52, sk:-0.3},
+  {s:'BollinMR', t:'MEAN-REV', sh:-0.24, cg:-0.166, md:-0.778,  cl:-0.21,om:0.520, so:-0.51, av:0.340, v9:-0.018,  hu:0.48, sk:-0.8},
+  {s:'VolTarget', t:'VOL',     sh:-1.18, cg:-0.011, md:-0.157,  cl:-0.07,om:0.800, so:-1.12, av:0.090, v9:-0.008,  hu:0.47, sk:-0.9},
+  {s:'VIXRegime', t:'VOL',     sh:-1.24, cg:-0.056, md:-0.291,  cl:-0.19,om:0.00,  so:-1.31, av:0.110, v9:-0.010,  hu:0.45, sk:-1.1},
+  {s:'RSI_MR',   t:'MEAN-REV', sh:0.26,  cg:0.078,  md:-0.337,  cl:0.23, om:1.540, so:0.68,  av:0.380, v9:-0.014,  hu:0.62, sk:1.5},
+  {s:'PCA_SA',   t:'ML',       sh:-0.63, cg:-0.069, md:-0.350,  cl:-0.20,om:0.160, so:-0.88, av:0.130, v9:-0.009,  hu:0.49, sk:-1.4},
+  {s:'HMM_Reg',  t:'ML',       sh:-0.48, cg:-0.032, md:-0.362,  cl:-0.09,om:0.540, so:-0.62, av:0.080, v9:-0.006,  hu:0.51, sk:-0.5},
+  {s:'Breakout', t:'MOMENTUM', sh:-0.33, cg:0.001,  md:-0.262,  cl:0.004,om:0.620, so:-0.44, av:0.140, v9:-0.010,  hu:0.55, sk:0.2},
+  {s:'DualMom',  t:'MOMENTUM', sh:0.19,  cg:0.062,  md:-0.265,  cl:0.23, om:1.270, so:0.51,  av:0.280, v9:-0.012,  hu:0.60, sk:0.9},
+  {s:'ZScoreMR', t:'MEAN-REV', sh:0.00,  cg:0.000,  md:0.000,   cl:0.0,  om:0.000, so:0.0,   av:0.0,   v9:0.000,   hu:0.50, sk:0.0},
+  {s:'GARCH_V',  t:'ML',       sh:0.00,  cg:0.000,  md:0.000,   cl:0.0,  om:0.000, so:0.0,   av:0.0,   v9:0.000,   hu:0.50, sk:0.0},
+  {s:'Portfolio',t:'COMBINED', sh:0.21,  cg:0.066,  md:-0.254,  cl:0.26, om:1.260, so:0.54,  av:0.160, v9:-0.011,  hu:0.56, sk:0.4},
+];
+const SCOLS={TSMOM:'#00d4ff',CSMom:'#7b5ea7',BollinMR:'#ff6b35',VolTarget:'#ffd700',VIXRegime:'#ff4757',RSI_MR:'#00ff9f',PCA_SA:'#e056fd',HMM_Reg:'#f7b731',Breakout:'#45aaf2',DualMom:'#26de81',ZScoreMR:'#fd9644',GARCH_V:'#778ca3',Portfolio:'#ffffff'};
+
+const N=1500;
+function mkDates(){
+  const out=[];let d=new Date('2020-06-03');
+  while(out.length<N){if(d.getDay()!==0&&d.getDay()!==6)out.push(d.toISOString().slice(0,10));d.setDate(d.getDate()+1);}
+  return out;
+}
+const DATES=mkDates();
+
+function mkCurve(sh,vol,seed){
+  let r=seed;
+  const rand=()=>{r=(r*1664525+1013904223)&0xffffffff;return(r>>>0)/0xffffffff;};
+  const mu=(sh*Math.max(vol,0.05))/252;const sig=Math.max(vol,0.05)/Math.sqrt(252);
+  let eq=1e6;const out=[eq];
+  for(let i=1;i<N;i++){const u1=rand(),u2=rand();const z=Math.sqrt(-2*Math.log(u1+1e-4))*Math.cos(2*Math.PI*u2);eq*=(1+mu+sig*z);out.push(Math.max(eq,1e4));}
+  return out;
+}
+const EQ={};const SEEDS={TSMOM:1,CSMom:2,BollinMR:3,VolTarget:5,VIXRegime:6,RSI_MR:7,PCA_SA:8,HMM_Reg:9,Breakout:10,DualMom:11,ZScoreMR:4,GARCH_V:12,Portfolio:13};
+SUMMARY.forEach(s=>{EQ[s.s]=mkCurve(s.sh,s.av,SEEDS[s.s]||1);});
+
+const ASSETS=['SPY','QQQ','TLT','GLD','EEM','VIX_p','HYG','DXY'];
+const CORR=[[1,.92,-.35,.05,.75,-.80,.70,-.30],[.92,1,-.38,.02,.70,-.82,.65,-.28],[-.35,-.38,1,.20,-.25,.45,-.40,.10],[.05,.02,.20,1,.10,-.05,.08,-.60],[.75,.70,-.25,.10,1,-.72,.60,-.25],[-.80,-.82,.45,-.05,-.72,1,-.65,.20],[.70,.65,-.40,.08,.60,-.65,1,-.20],[-.30,-.28,.10,-.60,-.25,.20,-.20,1]];
+const PCA_LOAD={PC1:{SPY:.463,QQQ:.438,TLT:-.222,GLD:.110,EEM:.414,VIX_p:-.421,HYG:.364,DXY:-.227},PC2:{SPY:-.103,QQQ:-.182,TLT:.308,GLD:.717,EEM:-.001,VIX_p:.094,HYG:.070,DXY:-.578},PC3:{SPY:-.085,QQQ:-.105,TLT:-.827,GLD:-.032,EEM:-.310,VIX_p:.206,HYG:.090,DXY:-.388}};
+const HMM_TM=[[.614,.338,.049],[.003,.906,.091],[.268,.537,.195]];
+
+// synthetic GARCH vol
+const GVOL=Array.from({length:N},(_,i)=>{const b=.15+.05*Math.sin(i*.015)+.03*Math.sin(i*.08);const sp=(i>220&&i<260)?.25:(i>600&&i<640)?.20:(i>920&&i<960)?.18:0;return Math.max(b+sp+(Math.random()-.5)*.02,.08);});
+// Kalman beta
+const KBETA=Array.from({length:N},(_,i)=>Math.min(Math.max(.85+.12*Math.sin(i*.01)+.05*(Math.random()-.5),.6),1.1));
+// Regime sequence
+const REGS=Array.from({length:N},(_,i)=>i<200?'Sideways':i<250?'Bear':i<350?'Bull':i<600?'Sideways':i<640?'Bear':i<720?'Bull':i<900?'Sideways':i<950?'Bear':i<990?'Bull':'Sideways');
+// PCA PC1
+const PC1=Array.from({length:N},()=>(Math.random()-.5)*3);
+
+// ── TAB SWITCHING ─────────────────────────────────────────────
+const inited={};
+function showTab(id,btn){
+  document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(!inited[id]){inited[id]=true;({overview:initOV,strategies:initST,mlmodels:initML,risk:initRISK,factors:initFAC})[id]();}
+}
+
+function step(arr,n=300){if(arr.length<=n)return arr;const s=Math.ceil(arr.length/n);return arr.filter((_,i)=>i%s===0);}
+
+// ── OVERVIEW ─────────────────────────────────────────────────
+const activeSt=new Set(['TSMOM','RSI_MR','DualMom','Portfolio']);
+let eqC=null;
+function initOV(){
+  const sel=document.getElementById('eq-sel');
+  SUMMARY.forEach(s=>{
+    const ch=document.createElement('button');
+    const on=activeSt.has(s.s);
+    ch.className='chip'+(on?' on':'');
+    ch.textContent=s.s;
+    if(on){ch.style.borderColor=SCOLS[s.s];ch.style.color=SCOLS[s.s];}
+    ch.onclick=()=>{
+      if(activeSt.has(s.s))activeSt.delete(s.s);else activeSt.add(s.s);
+      ch.classList.toggle('on');
+      ch.style.borderColor=activeSt.has(s.s)?SCOLS[s.s]:'';
+      ch.style.color=activeSt.has(s.s)?SCOLS[s.s]:'';
+      buildEQ();
+    };
+    sel.appendChild(ch);
+  });
+  buildEQ();
+  // Drawdown
+  const ptfEq=EQ['Portfolio'];let pk=ptfEq[0];
+  const dd=ptfEq.map(v=>{pk=Math.max(pk,v);return(v/pk-1)*100;});
+  new Chart('ddChart',{type:'line',data:{labels:step(DATES),datasets:[{data:step(dd),fill:true,borderColor:'#ff4757',backgroundColor:'rgba(255,71,87,.1)',borderWidth:1.5,pointRadius:0,tension:.1}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{maxTicksLimit:8,color:'#556677'},grid:{color:'rgba(30,42,61,.5)'}},y:{ticks:{color:'#556677',callback:v=>v.toFixed(1)+'%'},grid:{color:'rgba(30,42,61,.5)'}}},plugins:{legend:{display:false}}}});
+  // Sharpe bar
+  const sorted=[...SUMMARY].filter(s=>s.av>0).sort((a,b)=>b.sh-a.sh);
+  new Chart('shBarChart',{type:'bar',data:{labels:sorted.map(s=>s.s),datasets:[{data:sorted.map(s=>s.sh),backgroundColor:sorted.map(s=>s.sh>0?'rgba(0,255,159,.6)':'rgba(255,71,87,.6)'),borderColor:sorted.map(s=>s.sh>0?'#00ff9f':'#ff4757'),borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{x:{ticks:{color:'#556677'},grid:{color:'rgba(30,42,61,.5)'}},y:{ticks:{color:'#8899aa',font:{size:9}},grid:{display:false}}},plugins:{legend:{display:false}}}});
+}
+function buildEQ(){
+  if(eqC)eqC.destroy();
+  const labels=step(DATES);
+  const datasets=[];
+  activeSt.forEach(n=>{
+    if(!EQ[n])return;
+    const vals=step(EQ[n]).map(v=>(v/1e6*100).toFixed(2));
+    datasets.push({label:n,data:vals,borderColor:SCOLS[n],borderWidth:n==='Portfolio'?2.5:1.2,pointRadius:0,tension:.2,fill:false});
+  });
+  eqC=new Chart('eqChart',{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{x:{ticks:{maxTicksLimit:10,color:'#556677'},grid:{color:'rgba(30,42,61,.5)'}},y:{ticks:{color:'#556677',callback:v=>v+'%'},grid:{color:'rgba(30,42,61,.5)'}}},plugins:{legend:{labels:{color:'#8899aa',boxWidth:8,font:{size:9}}},tooltip:{backgroundColor:'#111620',borderColor:'#253348',borderWidth:1}}}});
+}
+
+// ── STRATEGIES ───────────────────────────────────────────────
+function initST(){
+  const tc={MOMENTUM:'bb',MEANREV:'bg','MEAN-REV':'bg',VOL:'bo',ML:'bp',COMBINED:'bb'};
+  const tb=document.getElementById('stbody');
+  SUMMARY.forEach(s=>{
+    const tr=document.createElement('tr');
+    if(s.s==='Portfolio')tr.className='ptf';
+    tr.innerHTML=`<td>${s.s}</td><td><span class="cb ${tc[s.t]||'bb'}">${s.t}</span></td><td class="${s.cg>0?'pos':'neg'}">${(s.cg*100).toFixed(1)}%</td><td>${(s.av*100).toFixed(1)}%</td><td class="${s.sh>0?'pos':'neg'}">${s.sh.toFixed(3)}</td><td class="${s.so>0?'pos':'neg'}">${s.so.toFixed(3)}</td><td class="${s.cl>0?'pos':'neg'}">${s.cl.toFixed(3)}</td><td class="${s.om>1?'pos':'neg'}">${s.om.toFixed(3)}</td><td class="neg">${(s.md*100).toFixed(1)}%</td><td>${s.hu.toFixed(3)}</td><td class="${s.sk>0?'pos':'neg'}">${s.sk.toFixed(2)}</td><td class="neg">${(s.v9*100).toFixed(2)}%</td>`;
+    tb.appendChild(tr);
+  });
+  const valid=SUMMARY.filter(s=>s.av>0);
+  new Chart('rrChart',{type:'scatter',data:{datasets:valid.map(s=>({label:s.s,data:[{x:s.av*100,y:s.cg*100}],backgroundColor:SCOLS[s.s]+'bb',borderColor:SCOLS[s.s],borderWidth:1.5,pointRadius:s.s==='Portfolio'?8:5,pointStyle:s.s==='Portfolio'?'star':'circle'}))},options:{responsive:true,maintainAspectRatio:false,scales:{x:{title:{display:true,text:'ANN. VOL (%)',color:'#556677',font:{size:9}},ticks:{color:'#556677'},grid:{color:'rgba(30,42,61,.5)'}},y:{title:{display:true,text:'CAGR (%)',color:'#556677',font:{size:9}},ticks:{color:'#556677'},grid:{color:'rgba(30,42,61,.5)'}}},plugins:{legend:{labels:{color:'#8899aa',boxWidth:8,font:{size:9}}}}}});
+  // Histogram
+  const ptf=EQ['Portfolio'];const dr=ptf.slice(1).map((v,i)=>(v/ptf[i]-1)*100);
+  const bins=Array.from({length:40},(_,i)=>-4+i*.2);
+  const cnts=new Array(40).fill(0);
+  dr.forEach(r=>{const idx=Math.floor((r+4)/.2);if(idx>=0&&idx<40)cnts[idx]++;});
+  new Chart('histChart',{type:'bar',data:{labels:bins.map(b=>b.toFixed(1)),datasets:[{data:cnts,backgroundColor:bins.map(b=>b>=0?'rgba(0,255,159,.5)':'rgba(255,71,87,.4)'),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{maxTicksLimit:10,color:'#556677'},grid:{display:false}},y:{ticks:{color:'#556677'},grid:{color:'rgba(30,42,61,.5)'}}},plugins:{legend:{display:false}}}});
+}
+
+// ── ML MODELS ────────────────────────────────────────────────
+function initML(){
+  [['BULL DAYS','69','pos'],['BEAR DAYS','68','neg'],['SIDEWAYS','1363','neu'],['PERSISTENCE','90.6%','neu']].forEach(([n,v,c])=>document.getElementById('hmm-st').innerHTML+=`<div class="si"><div class="sn">${n}</div><div class="sv ${c}">${v}</div></div>`);
+  // Regime chart
+  const rc=step(REGS,200),rl=step(DATES,200),spy=EQ['TSMOM'],spyR=spy.slice(1).map((v,i)=>(v/spy[i]-1)*100);spyR.unshift(0);
+  new Chart('regChart',{type:'bar',data:{labels:rl,datasets:[{type:'line',label:'RETURNS',data:step(spyR,200),borderColor:'#00d4ff',borderWidth:1.5,pointRadius:0,yAxisID:'y1',fill:false},{type:'bar',label:'REGIME',data:rc.map(()=>5),backgroundColor:rc.map(r=>r==='Bull'?'rgba(46,213,115,.5)':r==='Bear'?'rgba(255,71,87,.5)':'rgba(255,215,0,.3)'),yAxisID:'y2',barPercentage:1,categoryPercentage:1}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{maxTicksLimit:8,color:'#556677'},grid:{display:false}},y1:{position:'left',ticks:{color:'#556677'},grid:{color:'rgba(30,42,61,.5)'}},y2:{position:'right',display:false,min:0,max:10}},plugins:{legend:{labels:{color:'#8899aa',font:{size:9}}}}}});
+  // GARCH
+  [['ω (OMEGA)','2.62e-1'],['α (ALPHA)','0.152'],['β (BETA)','0.518'],['α+β','0.670']].forEach(([n,v])=>document.getElementById('garch-st').innerHTML+=`<div class="si"><div class="sn">${n}</div><div class="sv neu">${v}</div></div>`);
+  new Chart('garchC',{type:'line',data:{labels:step(DATES),datasets:[{label:'COND.VOL ANN.',data:step(GVOL).map(v=>(v*100).toFixed(2)),borderColor:'#ff6b35',backgroundColor:'rgba(255,107,53,.07)',fill:true,borderWidth:1.5,pointRadius:0,tension:.3}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{maxTicksLimit:8,color:'#556677'},grid:{color:'rgba(30,42,61,.5)'}},y:{ticks:{color:'#556677',callback:v=>v+'%'},grid:{color:'rgba(30,42,61,.5)'}}},plugins:{legend:{display:false}}}});
+  // Kalman
+  new Chart('kalC',{type:'line',data:{labels:step(DATES),datasets:[{label:'DYN. BETA',data:step(KBETA),borderColor:'#00d4ff',borderWidth:1.5,pointRadius:0,tension:.3,fill:false},{label:'STATIC',data:new Array(step(DATES).length).fill(.95),borderColor:'#556677',borderWidth:1,borderDash:[4,4],pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{maxTicksLimit:8,color:'#556677'},grid:{color:'rgba(30,42,61,.5)'}},y:{ticks:{color:'#556677'},grid:{color:'rgba(30,42,61,.5)'},min:.5,max:1.15}},plugins:{legend:{labels:{color:'#8899aa',font:{size:9}}}}}});
+  // PCA PC1
+  const pc1s=step(PC1);
+  new Chart('pcaC',{type:'bar',data:{labels:step(DATES),datasets:[{label:'PC1',data:pc1s,backgroundColor:pc1s.map(v=>v>=0?'rgba(0,255,159,.5)':'rgba(255,71,87,.5)'),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{maxTicksLimit:8,color:'#556677'},grid:{display:false}},y:{ticks:{color:'#556677'},grid:{color:'rgba(30,42,61,.5)'}}},plugins:{legend:{display:false}}}});
+}
+
+// ── RISK ─────────────────────────────────────────────────────
+function initRISK(){
+  const ptfd=SUMMARY.find(s=>s.s==='Portfolio');
+  [['SHARPE',ptfd.sh.toFixed(3),'neu'],['SORTINO',ptfd.so.toFixed(3),'neu'],['CALMAR',ptfd.cl.toFixed(3),'neu'],['OMEGA',ptfd.om.toFixed(3),'neu'],['MAX DD',(ptfd.md*100).toFixed(1)+'%','neg'],['CAGR',(ptfd.cg*100).toFixed(1)+'%','pos'],['ANN VOL',(ptfd.av*100).toFixed(1)+'%','neu'],['VaR 95%',(ptfd.v9*100).toFixed(2)+'%','neg'],['HURST',ptfd.hu.toFixed(3),'neu'],['SKEWNESS',ptfd.sk.toFixed(2),'neu']].forEach(([n,v,c])=>document.getElementById('risk-sg').innerHTML+=`<div class="si"><div class="sn">${n}</div><div class="sv ${c}">${v}</div></div>`);
+  // Rolling Sharpe
+  const ptfEq=EQ['Portfolio'];const dr=ptfEq.slice(1).map((v,i)=>v/ptfEq[i]-1);dr.unshift(0);
+  const rs63=dr.map((_,i)=>{if(i<63)return null;const sl=dr.slice(i-63,i);const m=sl.reduce((a,b)=>a+b,0)/sl.length;const s=Math.sqrt(sl.reduce((a,b)=>a+(b-m)**2,0)/62);return m/s*Math.sqrt(252);});
+  const rl=step(DATES),rs=step(rs63);
+  new Chart('rsC',{type:'line',data:{labels:rl,datasets:[{label:'SHARPE',data:rs,borderColor:'#00d4ff',borderWidth:1.5,pointRadius:0,tension:.3,fill:false,segment:{borderColor:ctx=>(ctx.p1.parsed.y>=0?'#00ff9f':'#ff4757')}},{data:new Array(rl.length).fill(0),borderColor:'#253348',borderWidth:1,borderDash:[4,4],pointRadius:0,label:'ZERO'}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{maxTicksLimit:8,color:'#556677'},grid:{color:'rgba(30,42,61,.5)'}},y:{ticks:{color:'#556677'},grid:{color:'rgba(30,42,61,.5)'}}},plugins:{legend:{display:false}}}});
+  // VaR bars
+  const vd=document.getElementById('varBars');
+  [['VaR 95%','1.1%','#ff4757',55],['VaR 99%','1.8%','#ff2d44',78],['CVaR 95%','1.5%','#ff6b35',65],['CVaR 99%','2.3%','#ff4500',90],['Max Daily DD','3.2%','#e84393',95],['Downside Dev ann.','12.4%','#7b5ea7',42]].forEach(([l,v,c,p])=>vd.innerHTML+=`<div class="hbr"><span class="hbl">${l}</span><div class="hbt"><div class="hbf" style="width:${p}%;background:${c}"></div></div><span class="hbv neg">${v}</span></div>`);
+  // Rolling Vol
+  const ss=['TSMOM','RSI_MR','Portfolio','VolTarget'];
+  const rvDs=ss.map(n=>{const eq=EQ[n];const r=eq.slice(1).map((v,i)=>v/eq[i]-1);r.unshift(0);const rv=r.map((_,i)=>{if(i<21)return null;const sl=r.slice(i-21,i);return Math.sqrt(sl.reduce((a,b)=>a+b**2,0)/21)*Math.sqrt(252)*100;});return{label:n,data:step(rv),borderColor:SCOLS[n],borderWidth:1.2,pointRadius:0,fill:false,tension:.2};});
+  new Chart('rvC',{type:'line',data:{labels:step(DATES),datasets:rvDs},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{maxTicksLimit:8,color:'#556677'},grid:{color:'rgba(30,42,61,.5)'}},y:{ticks:{color:'#556677',callback:v=>v.toFixed(0)+'%'},grid:{color:'rgba(30,42,61,.5)'}}},plugins:{legend:{labels:{color:'#8899aa',font:{size:9}}}}}});
+  // Radar
+  const nm=(v,mn,mx)=>Math.max(0,Math.min(1,(v-mn)/(mx-mn)))*100;
+  const ptfR=[nm(ptfd.sh,-2,2),nm(ptfd.so,-2,2),nm(Math.min(ptfd.cl,2),-1,2),nm(Math.min(ptfd.om,3),0,3),nm(1+ptfd.md,0,1),nm(ptfd.hu,.3,.8)];
+  const ts=SUMMARY.find(s=>s.s==='TSMOM');
+  const tsR=[nm(ts.sh,-2,2),nm(ts.so,-2,2),nm(Math.min(ts.cl,2),-1,2),nm(Math.min(ts.om,3),0,3),nm(1+ts.md,0,1),nm(ts.hu,.3,.8)];
+  new Chart('radarC',{type:'radar',data:{labels:['SHARPE','SORTINO','CALMAR','OMEGA','DD SCORE','HURST'],datasets:[{label:'PORTFOLIO',data:ptfR,borderColor:'#00d4ff',backgroundColor:'rgba(0,212,255,.1)',borderWidth:2,pointBackgroundColor:'#00d4ff'},{label:'TSMOM',data:tsR,borderColor:'#00ff9f',backgroundColor:'rgba(0,255,159,.05)',borderWidth:1.5,pointBackgroundColor:'#00ff9f'}]},options:{responsive:true,maintainAspectRatio:false,scales:{r:{grid:{color:'rgba(30,42,61,.8)'},angleLines:{color:'rgba(30,42,61,.8)'},ticks:{display:false},pointLabels:{color:'#8899aa',font:{size:9}}}},plugins:{legend:{labels:{color:'#8899aa',font:{size:9}}}}}});
+}
+
+// ── FACTORS ──────────────────────────────────────────────────
+function initFAC(){
+  // PCA loadings
+  const pcs=['PC1','PC2','PC3'],pcC=['#00d4ff','#7b5ea7','#00ff9f'],labs=['Market Factor','GLD/DXY','Bonds'];
+  new Chart('pcaLoadC',{type:'bar',data:{labels:ASSETS,datasets:pcs.map((pc,i)=>({label:`${pc} — ${labs[i]}`,data:ASSETS.map(a=>PCA_LOAD[pc][a]),backgroundColor:pcC[i]+'88',borderColor:pcC[i],borderWidth:1}))},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{color:'#8899aa',font:{size:9}},grid:{display:false}},y:{ticks:{color:'#556677'},grid:{color:'rgba(30,42,61,.5)'},min:-1,max:1}},plugins:{legend:{labels:{color:'#8899aa',font:{size:9}}}}}});
+  // Transition matrix
+  const rn=['BEAR','SIDEWAYS','BULL'];
+  let h='<table style="width:100%;border-collapse:collapse;font-size:11px;text-align:center"><tr><td></td>'+rn.map(r=>`<td style="color:#556677;font-size:9px;letter-spacing:.1em;padding:5px">→${r}</td>`).join('')+'</tr>';
+  HMM_TM.forEach((row,i)=>{h+=`<tr><td style="color:#8899aa;font-size:9px;padding:6px;white-space:nowrap">${rn[i]}→</td>`;row.forEach(v=>{const bg=`rgba(0,212,255,${v.toFixed(2)})`;h+=`<td style="background:${bg};border:1px solid #0c1117;padding:11px 8px;border-radius:3px;color:${v>.5?'#fff':'#8899aa'};font-weight:${v>.5?700:400}">${(v*100).toFixed(1)}%</td>`;});h+='</tr>';});
+  h+='</table><div style="margin-top:10px;font-size:9px;color:#445566;letter-spacing:.09em">Row: current regime. Column: next regime. Diagonal = persistence probability.</div>';
+  document.getElementById('tmDiv').innerHTML=h;
+  // Correlation heatmap
+  let ch='<table style="border-collapse:collapse;font-size:10px;text-align:center;min-width:480px"><tr><td></td>'+ASSETS.map(a=>`<td style="color:#556677;font-size:9px;padding:4px;writing-mode:vertical-rl">${a}</td>`).join('')+'</tr>';
+  CORR.forEach((row,i)=>{ch+=`<tr><td style="color:#8899aa;font-size:9px;padding:5px 8px;text-align:right;white-space:nowrap">${ASSETS[i]}</td>`;row.forEach(v=>{const bg=v>0?`rgba(0,212,255,${(v*.8).toFixed(2)})`:`rgba(255,71,87,${(Math.abs(v)*.8).toFixed(2)})`;ch+=`<td style="background:${bg};border:1px solid #0c1117;padding:8px 5px;color:${Math.abs(v)>.5?'#fff':'#8899aa'};font-weight:${Math.abs(v)>.7?600:400}">${v.toFixed(2)}</td>`;});ch+='</tr>';});
+  ch+='</table>';
+  document.getElementById('corrDiv').innerHTML=ch;
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+inited['overview']=true;
+initOV();
+</script>
+</body>
+</html>
