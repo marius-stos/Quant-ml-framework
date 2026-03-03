@@ -82,7 +82,7 @@ def load_real_data(
         volumes = pd.DataFrame(index=returns.index, columns=prices.columns, data=1e6)
 
     if verbose:
-        print(f"  ✅ Loaded {len(prices)} trading days × {len(prices.columns)} assets")
+        print(f"  Loaded {len(prices)} trading days × {len(prices.columns)} assets")
         print(f"  Period: {prices.index[0].date()} → {prices.index[-1].date()}")
         ann_rets = (1 + returns).prod() ** (252 / len(returns)) - 1
         ann_vols = returns.std() * np.sqrt(252)
