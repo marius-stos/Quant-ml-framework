@@ -603,4 +603,4 @@ class QLearningTrader:
         return pd.Series(positions, index=momentum.index)
 
 
-print("✅ models.py loaded")
+print("models.py loaded")
