@@ -210,8 +210,8 @@ def run_full_pipeline():
             "universe":        assets,
         }, f, indent=2)
 
-    print(f"\n✅ Saved → outputs/backtest_results.json")
-    print("✅ Done!\n")
+    print(f"\n Saved → outputs/backtest_results.json")
+    print(" Done!\n")
     return all_results
 
 
