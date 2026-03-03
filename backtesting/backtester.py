@@ -473,4 +473,4 @@ class EqualWeightCombiner:
         )
 
 
-print("✅ backtester.py loaded")
+print("backtester.py loaded")
