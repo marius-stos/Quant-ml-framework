@@ -189,4 +189,4 @@ class BaseStrategy(ABC):
         return f"<Strategy: {self.name}>"
 
 
-print("✅ core.py loaded")
+print("core.py loaded")
