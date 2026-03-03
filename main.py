@@ -180,8 +180,8 @@ def run_full_pipeline():
             }
         }, f, indent=2)
 
-    print(f"\n✅ Results saved to outputs/backtest_results.json")
-    print("✅ Pipeline complete!\n")
+    print(f"\n Results saved to outputs/backtest_results.json")
+    print(" Pipeline complete!\n")
     return all_results, regime_data, pca, hmm, garch, kf_result
 
 
