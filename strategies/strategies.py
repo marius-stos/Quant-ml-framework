@@ -473,4 +473,4 @@ def get_all_strategies(config: Optional[BacktestConfig] = None) -> list:
     return [cls(config=config) for cls in STRATEGY_REGISTRY.values()]
 
 
-print(f"✅ strategies.py loaded — {len(STRATEGY_REGISTRY)} strategies registered")
+print(f"strategies.py loaded — {len(STRATEGY_REGISTRY)} strategies registered")
